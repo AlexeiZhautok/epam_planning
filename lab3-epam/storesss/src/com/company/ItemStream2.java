@@ -1,29 +1,33 @@
 
 package com.company;
 
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
-
-public class ItemStream {
+public class ItemStream2 {
     private Stream<Item> stream;
-    private ItemCollection i_collection = new ItemCollection();
+    private ItemCollection2 i_collection = new ItemCollection2();
+    private Stream<Item> stream2;
+    private ItemCollection i_collection2 = new ItemCollection();
 
     private void UpdateStream() {
         stream.close();
         stream = i_collection.getArray().stream();
+
     }
 
-    public ItemStream(ItemCollection input) {
+    public ItemStream2(ItemCollection2 input) {
         i_collection = input;
         stream = input.getArray().stream();
+;
     }
 
-    public boolean AreThereItemExpensiveThen(int i_price) {
-        long result = stream.filter((Item obj) -> { return obj.getPrice() > i_price; }).count();
+    public boolean PriceOverThen(int i_price) {
+        long result = stream.filter((Item obj) -> { return obj.getPrice() > i_price; }).peek(System.out::println).count();
         UpdateStream();
         return result==0;
     }
@@ -40,9 +44,26 @@ public class ItemStream {
         return result;
     }
 
-    public ArrayList<Item> FilterItemsWithSingleStore() {
+    public ArrayList<Item> SinglStoreItemNonParallel() {
+        long m = System.currentTimeMillis();
         ArrayList<Item> result = new ArrayList<Item>(stream.filter((Item obj) -> { return obj.getStores().size() == 1; }).collect(toList()));
+        System.out.println((double) (System.currentTimeMillis() - m));
         UpdateStream();
+        return result;
+    }
+
+
+
+    public ArrayList<Item> SinglStoreItem() {
+        long m = System.currentTimeMillis();
+        ArrayList<Item> result = new ArrayList<Item>(stream.parallel().filter((Item obj) -> { return obj.getStores().size() == 1; }).collect(toList()));
+        System.out.println((double) (System.currentTimeMillis() - m));
+        UpdateStream();
+//        m = System.currentTimeMillis();
+//        ArrayList<Item> result2 = new ArrayList<Item>(stream2.parallel().filter((Item obj) -> { return obj.getStores().size() == 1; }).collect(toList()));
+//        System.out.println((double) (System.currentTimeMillis() - m));
+//        UpdateStream();
+
         return result;
     }
 
@@ -64,7 +85,7 @@ public class ItemStream {
         return result;
     }
 
-    public ArrayList<Store> GetStoresNoDublicates() {
+    public ArrayList<Store> GetAllStores() {
         ArrayList<Store> result = new ArrayList<>(stream.flatMap(e->e.getStores().stream()).distinct().collect(Collectors.toList()));
         UpdateStream();
         return result;
